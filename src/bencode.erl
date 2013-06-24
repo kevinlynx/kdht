@@ -2,6 +2,7 @@
 
 %% API
 -export([decode/1, encode/1]).
+-export([dec/1]).
 
 %% You are able to choose the dict implementation
 -define(DICT, dict).

@@ -128,5 +128,4 @@ when ?in_range(ID, Min, Max) ->
     end;
 
 do_insert(Self, ID, IP, Port, [H|T]) ->
-    [H|do_insert(Self, ID, IP, Port, T)]. 
-
+    [H|do_insert(Self, ID, IP, Port, T)].
