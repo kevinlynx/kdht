@@ -10,6 +10,9 @@
 -define(QUERY_TIMEOUT, 2000).
 -define(K, 8).
 
+% system monitor flags
+-define(MAX_NODE_TIMER, 160*8).
+
 -ifdef(debug).
 
 -define(NODE_TIMEOUT, 1*60*1000).

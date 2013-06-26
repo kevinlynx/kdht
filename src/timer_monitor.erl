@@ -4,6 +4,8 @@
 %% 06.05.2013
 %%
 -module(timer_monitor).
+-include("vlog.hrl").
+-include("conf.hrl").
 -behaviour(gen_server).
 -export([init/1,
          handle_call/3,
@@ -72,8 +74,9 @@ handle_call({add, Key, Timeout, Msg}, From, State) ->
     #state{timers = Timers} = State,
     {Pid, _} = From,
     ThisMsg = {check, Key, Timeout, Pid, Msg},
-    {ok, NewRef} = timer:send_after(Timeout, ThisMsg),
+    {ok, NewRef} = timer:send_interval(Timeout, ThisMsg),
     NewTimers = gb_trees:insert(Key, {now(), NewRef}, Timers),
+    check_stats(gb_trees:size(NewTimers)),
     {reply, ok, State#state{timers = NewTimers}};
 
 handle_call({active, Key}, _From, State) ->
@@ -103,4 +106,10 @@ handle_call({get, Key}, _From, State) ->
 
 handle_call(_, _From, State) ->
     {reply, not_implemented, State}.
+
+check_stats(TimerSize) ->
+    case TimerSize > ?MAX_NODE_TIMER of
+        true -> ?E(?FMT("~p node timer ~p > ~p", [self(), TimerSize, ?MAX_NODE_TIMER]));
+        false -> ok
+    end.
 
