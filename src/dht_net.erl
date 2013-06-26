@@ -168,10 +168,10 @@ handle_msg(Socket, IP, Port, Data, State) ->
 	#state{ownid = MyID, sents = Sents} = State,
 	case (catch parse_message(Data)) of
 		{'EXIT', _} ->
-			?E(?FMT("parse message failed ~p:~p ~p", [IP, Port, Data])),
+			?W(?FMT("parse message failed ~p:~p ~p", [IP, Port, Data])),
 			State;
 		{error, Tid, Err} ->
-			?E(?FMT("received an error ~p ~p from ~p:~p", [Tid, Err, IP, Port])),
+			?W(?FMT("received an error ~p ~p from ~p:~p", [Tid, Err, IP, Port])),
 			NewSents = response_timeout(Tid, Sents),
 			State#state{sents = NewSents};
 		{response, Tid, Args} ->
