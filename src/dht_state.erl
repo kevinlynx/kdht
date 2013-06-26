@@ -95,6 +95,10 @@ handle_cast({insert, ID, IP, Port}, State) ->
 	NewBuckets = bucket:insert(MyID, ID, IP, Port, Buckets),
 	monitor_node(MyID, ID, IP, Port, Exist),
 	?T(?FMT("inserted a node, bucket size ~p", [length(NewBuckets)])),
+	case length(NewBuckets) > 160 of
+		true -> ?E(?FMT("fatal error, bucket size ~p > 160", [length(NewBuckets)]));
+		false -> ok
+	end,
 	{noreply, State#state{buckets = NewBuckets}};
 
 handle_cast(stop, State) ->
