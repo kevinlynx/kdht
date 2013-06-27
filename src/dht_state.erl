@@ -78,7 +78,7 @@ init([MyID, NodeAddrs, Filename, Mod]) ->
 handle_cast(save, State) ->
 	save_state(State),
 	{noreply, State};
-
+ 
 handle_cast(dump, State) ->
 	#state{buckets = Buckets} = State,
 	bucket:dump(Buckets),

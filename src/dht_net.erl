@@ -19,7 +19,7 @@
 	     stop/1]).
 -include("vlog.hrl").
 -include("conf.hrl").
--record(state, {ownid, sock, sents, tidseed = 0}).
+-record(state, {ownid, sock, sents, port, tidseed = 0}).
 
 start_link(MyID, Port) ->
 	gen_server:start_link({local, srv_name(MyID)}, ?MODULE, [MyID, Port], []).
@@ -119,7 +119,7 @@ decode_compact_nodes(Values) ->
 init([MyID, Port]) ->
 	?I(?FMT("dht_net start at port ~p", [Port])),
     {ok, Sock} = gen_udp:open(Port, [binary, {active, once}]),
-    {ok, #state{ownid = MyID, sock = Sock, sents = gb_trees:empty()}}.
+    {ok, #state{ownid = MyID, sock = Sock, port = Port, sents = gb_trees:empty()}}.
 
 handle_info({udp, Socket, IP, Port, RawData}, State) ->
     NewState = handle_msg(Socket, IP, Port, RawData, State),
@@ -145,6 +145,10 @@ terminate(_, State) ->
 
 code_change(_, _, State) ->
     {ok, State}.
+
+handle_call({query, Type, {127, 0, 0, 1}, _SelfPort, _Arg}, _From, #state{port = _SelfPort} = State) ->
+	?E(?FMT("send query ~p to self", [Type])),
+	{reply, timeout, State};
 
 handle_call({query, Type, IP, Port, Arg}, From, State) ->
 	#state{ownid = MyID, tidseed = TidNum, sock = Sock, sents = Sents} = State,
@@ -202,12 +206,13 @@ handle_query(find_node, MyID, Tid, Args, _IP, _Port) ->
 	Closest = dht_state:closest(MyID, TID, 8),
 	Msg = msg:res_find_node(Tid, MyID, Closest),
 	{ok, Msg};
-
+ 
 handle_query(get_peers, MyID, Tid, Args, IP, Port) ->
     {ok, InfoHash} = dict:find(<<"info_hash">>, Args),
     ?T(?FMT("recv get_peers ~s", [dht_id:tohex(InfoHash)])),
     Token = token_value(IP, Port),
 	TID = dht_id:integer_id(InfoHash),
+	dht_state:notify_event(MyID, get_peers, {InfoHash, IP, Port}),
     case storage:query(MyID, TID) of
     	[] ->
 			Closest = dht_state:closest(MyID, TID, 8),
