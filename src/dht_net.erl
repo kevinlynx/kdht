@@ -171,8 +171,8 @@ handle_call(_, _From, State) ->
 handle_msg(Socket, IP, Port, Data, State) ->
 	#state{ownid = MyID, sents = Sents} = State,
 	case (catch parse_message(Data)) of
-		{'EXIT', _} ->
-			?W(?FMT("parse message failed ~p:~p ~p", [IP, Port, Data])),
+		{'EXIT', Rea} ->
+			?W(?FMT("parse message failed ~p:~p ~p", [IP, Port, Rea])),
 			State;
 		{error, Tid, Err} ->
 			?W(?FMT("received an error ~p ~p from ~p:~p", [Tid, Err, IP, Port])),
@@ -264,7 +264,7 @@ parse_message(Data) ->
 			{error, Tid, Err}
 	end.
 
-assert_query_args(get_peers, Args) ->
+assert_query_args(Type, Args) when Type == get_peers; Type == announce_peer ->
     {ok, InfoHash} = dict:find(<<"info_hash">>, Args),
 	20 = byte_size(InfoHash);
 
@@ -273,7 +273,8 @@ assert_query_args(_Type, _Args) ->
 
 assert_args(Args) ->
 	{ok, ID} = dict:find(<<"id">>, Args),
-	20 = byte_size(ID).
+	20 = byte_size(ID),
+	true = dht_id:is_valid(ID).
 
 % return new sents
 response_ok(<<_, _, TidNum:16>> = _, Values, Sents) ->

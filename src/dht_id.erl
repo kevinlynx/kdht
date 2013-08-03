@@ -9,6 +9,7 @@
          min/0,
          max/0,
          id_cmp/2,
+         is_valid/1,
          integer_id/1,
          list_id/1,
          tohex/1]).
@@ -52,4 +53,8 @@ tohex(ID) when is_binary(ID) ->
 tohex(ID) ->
     tohex(list_id(ID)).
 
+is_valid(ID) when is_binary(ID) ->
+    is_valid(integer_id(ID));
+is_valid(ID) ->
+    (ID > min()) and (ID < max()).
 
